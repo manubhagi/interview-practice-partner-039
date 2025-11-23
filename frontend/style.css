@@ -1,0 +1,300 @@
+:root {
+    --primary-color: #2563eb;
+    --primary-dark: #1d4ed8;
+    --secondary-color: #64748b;
+    --background-color: #f8fafc;
+    --surface-color: #ffffff;
+    --text-primary: #1e293b;
+    --text-secondary: #475569;
+    --accent-color: #3b82f6;
+    --error-color: #ef4444;
+    --success-color: #22c55e;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    line-height: 1.5;
+}
+
+.container {
+    background: var(--surface-color);
+    width: 100%;
+    max-width: 800px;
+    height: 90vh;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Header */
+header {
+    background: var(--surface-color);
+    padding: 1.5rem;
+    text-align: center;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+header p {
+    margin: 0.5rem 0 0;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+/* Screens */
+.screen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 2rem;
+    overflow-y: auto;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Setup Form */
+.form-group {
+    margin-bottom: 1.5rem;
+    text-align: left;
+}
+
+label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+select,
+input[type="file"] {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #cbd5e1;
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    background-color: #fff;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+
+select:focus,
+input[type="file"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.file-input-wrapper {
+    border: 2px dashed #cbd5e1;
+    padding: 2rem;
+    text-align: center;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.file-input-wrapper:hover {
+    border-color: var(--primary-color);
+    background-color: #eff6ff;
+}
+
+/* Buttons */
+.btn {
+    width: 100%;
+    padding: 1rem;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-1px);
+}
+
+.btn-danger {
+    background-color: #fee2e2;
+    color: var(--error-color);
+}
+
+.btn-danger:hover {
+    background-color: #fecaca;
+}
+
+/* Chat Interface */
+#interview-screen {
+    padding: 0;
+    background-color: #f8fafc;
+}
+
+.status-bar {
+    background: var(--surface-color);
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #e2e8f0;
+    box-shadow: var(--shadow-sm);
+    z-index: 10;
+}
+
+#status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.pulse-dot {
+    width: 10px;
+    height: 10px;
+    background-color: #cbd5e1;
+    border-radius: 50%;
+    transition: background-color 0.3s;
+}
+
+.pulse-dot.active {
+    background-color: var(--success-color);
+    box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.2);
+    animation: pulse 2s infinite;
+}
+
+.pulse-dot.listening {
+    background-color: var(--error-color);
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2);
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(0.95);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+    }
+
+    100% {
+        transform: scale(0.95);
+        opacity: 1;
+    }
+}
+
+#chat-history {
+    flex: 1;
+    padding: 1.5rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    scroll-behavior: smooth;
+}
+
+.message {
+    max-width: 80%;
+    padding: 1rem 1.25rem;
+    border-radius: 1.25rem;
+    font-size: 1rem;
+    line-height: 1.6;
+    position: relative;
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.message.agent {
+    background-color: var(--surface-color);
+    color: var(--text-primary);
+    align-self: flex-start;
+    border-bottom-left-radius: 0.25rem;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid #e2e8f0;
+}
+
+.message.user {
+    background-color: var(--primary-color);
+    color: white;
+    align-self: flex-end;
+    border-bottom-right-radius: 0.25rem;
+    box-shadow: var(--shadow-md);
+}
+
+.message-label {
+    font-size: 0.75rem;
+    margin-bottom: 0.25rem;
+    opacity: 0.7;
+    font-weight: 600;
+}
+
+.controls {
+    padding: 1.5rem;
+    background: var(--surface-color);
+    border-top: 1px solid #e2e8f0;
+}
+
+/* Feedback Screen */
+#feedback-content {
+    background: #f1f5f9;
+    padding: 1.5rem;
+    border-radius: var(--radius-md);
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-size: 0.9rem;
+    white-space: pre-wrap;
+    text-align: left;
+    margin-bottom: 1.5rem;
+    border: 1px solid #e2e8f0;
+    max-height: 400px;
+    overflow-y: auto;
+}

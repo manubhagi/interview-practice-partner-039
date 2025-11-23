@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Interview Partner</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 Interview Partner</h1>
+            <p>Professional AI-Powered Mock Interviews</p>
+        </header>
+
+        <div id="setup-screen" class="screen">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <h2 style="margin: 0; color: var(--text-primary);">Let's Get Started</h2>
+                <p style="color: var(--text-secondary);">Configure your interview session</p>
+            </div>
+
+            <div class="form-group">
+                <label for="role-select">Target Role</label>
+                <select id="role-select">
+                    <option value="Software Engineer">Software Engineer</option>
+                    <option value="Frontend Developer">Frontend Developer</option>
+                    <option value="Backend Developer">Backend Developer</option>
+                    <option value="Full Stack Developer">Full Stack Developer</option>
+                    <option value="DevOps Engineer">DevOps Engineer</option>
+                    <option value="Data Scientist">Data Scientist</option>
+                    <option value="Data Analyst">Data Analyst</option>
+                    <option value="Machine Learning Engineer">Machine Learning Engineer</option>
+                    <option value="Product Manager">Product Manager</option>
+                    <option value="Project Manager">Project Manager</option>
+                    <option value="Business Analyst">Business Analyst</option>
+                    <option value="UX/UI Designer">UX/UI Designer</option>
+                    <option value="Cybersecurity Analyst">Cybersecurity Analyst</option>
+                    <option value="Sales Associate">Sales Associate</option>
+                    <option value="Marketing Manager">Marketing Manager</option>
+                    <option value="Customer Support">Customer Support</option>
+                    <option value="HR Manager">HR Manager</option>
+                    <option value="Financial Analyst">Financial Analyst</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="experience-select">Experience Level</label>
+                <select id="experience-select">
+                    <option value="Junior">Junior (0-2 years)</option>
+                    <option value="Mid-Level">Mid-Level (3-5 years)</option>
+                    <option value="Senior">Senior (5+ years)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Resume (Optional)</label>
+                <div class="file-input-wrapper" onclick="document.getElementById('resume-upload').click()">
+                    <span style="font-size: 2rem;">📄</span>
+                    <p style="margin: 0.5rem 0 0;">Click to upload PDF or DOCX</p>
+                    <input type="file" id="resume-upload" accept=".pdf,.docx" style="display: none;"
+                        onchange="updateFileName(this)">
+                    <p id="file-name" style="font-size: 0.8rem; color: var(--primary-color); margin-top: 0.5rem;"></p>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" onclick="startInterview()">Start Interview 🚀</button>
+        </div>
+
+        <div id="interview-screen" class="screen hidden">
+            <div class="status-bar">
+                <div id="status-indicator">
+                    <div id="pulse-dot" class="pulse-dot"></div>
+                    <span id="status-text">Connecting...</span>
+                </div>
+                <div style="font-size: 0.875rem; color: var(--text-secondary);">Live Session</div>
+            </div>
+
+            <div id="chat-history"></div>
+
+            <div class="controls">
+                <button id="stop-listening-btn" class="btn btn-primary" onclick="stopListening()"
+                    style="display: none; margin-bottom: 1rem;">
+                    ✋ Done Speaking
+                </button>
+                <button id="end-btn" class="btn btn-danger" onclick="endInterview()">
+                    End Interview & Get Feedback
+                </button>
+            </div>
+        </div>
+
+        <div id="feedback-screen" class="screen hidden">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <h2 style="margin: 0;">Interview Complete 🎉</h2>
+                <p style="color: var(--text-secondary);">Here is your performance analysis</p>
+            </div>
+
+            <div id="feedback-content">Generating feedback...</div>
+
+            <button class="btn btn-primary" onclick="location.reload()">Start New Session</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        function updateFileName(input) {
+            const fileName = input.files[0]?.name;
+            if (fileName) {
+                document.getElementById('file-name').textContent = "Selected: " + fileName;
+            }
+        }
+    </script>
+</body>
+
+</html>

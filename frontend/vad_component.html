@@ -1,0 +1,136 @@
+
+<script>
+let mediaRecorder;
+let audioChunks = [];
+let audioContext;
+let analyser;
+let source;
+let silenceStart = Date.now();
+let isSpeaking = false;
+let isRecording = false;
+const SILENCE_THRESHOLD = 0.02; // Adjust based on mic sensitivity
+const SILENCE_DURATION = 2000; // 2 seconds of silence to trigger stop
+
+async function startVAD() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioContext.createAnalyser();
+        source = audioContext.createMediaStreamSource(stream);
+        source.connect(analyser);
+        
+        analyser.fftSize = 256;
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        
+        mediaRecorder = new MediaRecorder(stream);
+        
+        mediaRecorder.ondataavailable = (event) => {
+            audioChunks.push(event.data);
+        };
+        
+        mediaRecorder.onstop = async () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+            audioChunks = [];
+            await sendAudio(audioBlob);
+        };
+        
+        // Start monitoring loop
+        isRecording = true;
+        mediaRecorder.start();
+        updateStatus("Listening...");
+        checkSilence(dataArray);
+        
+    } catch (err) {
+        console.error("Error accessing microphone:", err);
+        updateStatus("Error: " + err.message);
+    }
+}
+
+function checkSilence(dataArray) {
+    if (!isRecording) return;
+    
+    requestAnimationFrame(() => checkSilence(dataArray));
+    
+    analyser.getByteFrequencyData(dataArray);
+    
+    // Calculate average volume
+    let sum = 0;
+    for(let i = 0; i < dataArray.length; i++) {
+        sum += dataArray[i];
+    }
+    let average = sum / dataArray.length / 255; // Normalize 0-1
+    
+    if (average > SILENCE_THRESHOLD) {
+        // User is speaking
+        if (!isSpeaking) {
+            isSpeaking = true;
+            console.log("Speaking started");
+            updateStatus("Speaking...");
+        }
+        silenceStart = Date.now(); // Reset silence timer
+    } else {
+        // Silence detected
+        if (isSpeaking) {
+            // User WAS speaking, now silent
+            let silenceTime = Date.now() - silenceStart;
+            if (silenceTime > SILENCE_DURATION) {
+                console.log("Silence detected, stopping...");
+                stopAndSend();
+            }
+        }
+    }
+}
+
+function stopAndSend() {
+    isRecording = false;
+    isSpeaking = false;
+    mediaRecorder.stop();
+    updateStatus("Processing...");
+}
+
+async function sendAudio(blob) {
+    const formData = new FormData();
+    formData.append("file", blob, "input.wav");
+    
+    // Get Session ID from parent (Streamlit) if possible, or use a default
+    // For this demo, we might need to hardcode or pass it via URL
+    const sessionId = "demo_session"; // TODO: Pass real session ID
+    
+    try {
+        const response = await fetch(`http://localhost:8000/chat_audio?session_id=${sessionId}`, {
+            method: "POST",
+            body: formData
+        });
+        
+        if (response.ok) {
+            updateStatus("Playing Response...");
+            const audioBlob = await response.blob();
+            const audioUrl = URL.createObjectURL(audioBlob);
+            const audio = new Audio(audioUrl);
+            audio.play();
+            audio.onended = () => {
+                updateStatus("Listening...");
+                // Restart recording loop
+                startVAD();
+            };
+        } else {
+            updateStatus("Error from server");
+        }
+    } catch (err) {
+        console.error(err);
+        updateStatus("Connection Error");
+    }
+}
+
+function updateStatus(text) {
+    document.getElementById("status").innerText = text;
+}
+</script>
+
+<div style="padding: 20px; border: 1px solid #ddd; border-radius: 10px; text-align: center;">
+    <h3>🎙️ Live Interview Mode</h3>
+    <p id="status">Ready</p>
+    <button onclick="startVAD()" style="padding: 10px 20px; background: #ff4b4b; color: white; border: none; border-radius: 5px; cursor: pointer;">Start Interview</button>
+</div>
