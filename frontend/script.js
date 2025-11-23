@@ -123,14 +123,21 @@ function startListening() {
     }
 
     let finalTranscript = '';
+    let silenceTimer = null;
+    const SILENCE_TIMEOUT = 15000; // 15 seconds of silence
 
     recognition.onstart = () => {
         isListening = true;
-        updateStatus("Listening... (Click 'Done Speaking' when finished)");
+        updateStatus("Listening... (Auto-stops after 15s of silence)");
         document.getElementById('stop-listening-btn').style.display = 'block';
     };
 
     recognition.onresult = (event) => {
+        // Clear existing silence timer since we detected speech
+        if (silenceTimer) {
+            clearTimeout(silenceTimer);
+        }
+
         let interimTranscript = '';
         for (let i = event.resultIndex; i < event.results.length; ++i) {
             if (event.results[i].isFinal) {
@@ -140,10 +147,21 @@ function startListening() {
             }
         }
         updateStatus(`Listening: ${finalTranscript} ${interimTranscript}`);
+
+        // Start new silence timer - will auto-stop after 15s of no speech
+        silenceTimer = setTimeout(() => {
+            console.log("15 seconds of silence detected, auto-stopping...");
+            if (recognition && isListening) {
+                recognition.stop();
+            }
+        }, SILENCE_TIMEOUT);
     };
 
     recognition.onend = () => {
         isListening = false;
+        if (silenceTimer) {
+            clearTimeout(silenceTimer);
+        }
         document.getElementById('stop-listening-btn').style.display = 'none';
         updateStatus("Processing...");
 
