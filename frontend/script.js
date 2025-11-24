@@ -3,8 +3,32 @@ let recognition = null;
 let synth = window.speechSynthesis;
 let isListening = false;
 let resumeText = "";
+let interviewStartTime = null;
+let timerInterval = null;
+let shouldKeepListening = false;
+let accumulatedTranscript = '';
 
 const API_URL = "http://localhost:8000";
+
+// Timer functions
+function startTimer() {
+    timerInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - interviewStartTime) / 1000);
+        const minutes = Math.floor(elapsed / 60);
+        const seconds = elapsed % 60;
+        const timerEl = document.getElementById('timer-display');
+        if (timerEl) {
+            timerEl.textContent = `⏱️ ${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+    }, 1000);
+}
+
+function stopTimer() {
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+}
 
 async function startInterview() {
     const role = document.getElementById("role-select").value;
@@ -38,6 +62,9 @@ async function startInterview() {
 
         document.getElementById("setup-screen").classList.add("hidden");
         document.getElementById("interview-screen").classList.remove("hidden");
+
+        interviewStartTime = Date.now();
+        startTimer();
 
         addMessage("agent", data.initial_message);
         speak(data.initial_message);
@@ -101,19 +128,27 @@ function startListening() {
         return;
     }
 
-    // Create recognition object only once (first time)
     if (!recognition) {
         recognition = new webkitSpeechRecognition();
         recognition.continuous = true;
         recognition.interimResults = true;
         recognition.lang = 'en-US';
 
-        // Set up error handler once
         recognition.onerror = (event) => {
             console.error("Speech error", event.error);
-            if (event.error === 'aborted') {
-                return; // Ignore aborted errors
+            if (event.error === 'aborted') return;
+
+            // Auto-restart on network errors
+            if (event.error === 'network' && shouldKeepListening) {
+                console.log("Network error, restarting...");
+                setTimeout(() => {
+                    if (shouldKeepListening) {
+                        recognition.start();
+                    }
+                }, 100);
+                return;
             }
+
             if (event.error === 'no-speech') {
                 updateStatus("No speech detected.");
             } else {
@@ -124,19 +159,20 @@ function startListening() {
 
     let finalTranscript = '';
     let silenceTimer = null;
-    const SILENCE_TIMEOUT = 15000; // 15 seconds of silence
+    const SILENCE_TIMEOUT = 15000;
+
+    // Enable auto-restart mode
+    shouldKeepListening = true;
+    accumulatedTranscript = '';
 
     recognition.onstart = () => {
         isListening = true;
-        updateStatus("Listening... (Auto-stops after 15s of silence)");
+        updateStatus("Listening... (Unlimited duration, stops after 15s silence)");
         document.getElementById('stop-listening-btn').style.display = 'block';
     };
 
     recognition.onresult = (event) => {
-        // Clear existing silence timer since we detected speech
-        if (silenceTimer) {
-            clearTimeout(silenceTimer);
-        }
+        if (silenceTimer) clearTimeout(silenceTimer);
 
         let interimTranscript = '';
         for (let i = event.resultIndex; i < event.results.length; ++i) {
@@ -146,11 +182,15 @@ function startListening() {
                 interimTranscript += event.results[i][0].transcript;
             }
         }
-        updateStatus(`Listening: ${finalTranscript} ${interimTranscript}`);
 
-        // Start new silence timer - will auto-stop after 15s of no speech
+        // Show accumulated + current transcript (truncated for display)
+        const displayText = accumulatedTranscript + finalTranscript + interimTranscript;
+        const truncated = displayText.length > 100 ? displayText.substring(0, 100) + '...' : displayText;
+        updateStatus(`Listening: ${truncated}`);
+
         silenceTimer = setTimeout(() => {
-            console.log("15 seconds of silence detected, auto-stopping...");
+            console.log("15 seconds of silence detected, stopping...");
+            shouldKeepListening = false; // Disable auto-restart
             if (recognition && isListening) {
                 recognition.stop();
             }
@@ -159,20 +199,38 @@ function startListening() {
 
     recognition.onend = () => {
         isListening = false;
-        if (silenceTimer) {
-            clearTimeout(silenceTimer);
-        }
-        document.getElementById('stop-listening-btn').style.display = 'none';
-        updateStatus("Processing...");
+        if (silenceTimer) clearTimeout(silenceTimer);
 
-        if (finalTranscript.trim().length > 0) {
-            sendUserResponse(finalTranscript);
+        // Add current transcript to accumulated
+        accumulatedTranscript += finalTranscript;
+
+        // Auto-restart if still should be listening (browser limit reached)
+        if (shouldKeepListening && accumulatedTranscript.trim().length > 0) {
+            console.log("Auto-restarting recognition for continuous speech...");
+            finalTranscript = ''; // Reset for next segment
+            setTimeout(() => {
+                if (shouldKeepListening) {
+                    try {
+                        recognition.start();
+                    } catch (e) {
+                        console.error("Restart error:", e);
+                    }
+                }
+            }, 100);
         } else {
-            updateStatus("Did not hear anything.");
+            // Actually done listening
+            document.getElementById('stop-listening-btn').style.display = 'none';
+            updateStatus("Processing...");
+
+            if (accumulatedTranscript.trim().length > 0) {
+                sendUserResponse(accumulatedTranscript.trim());
+                accumulatedTranscript = ''; // Clear for next time
+            } else {
+                updateStatus("Did not hear anything.");
+            }
         }
     };
 
-    // Start recognition
     try {
         recognition.start();
     } catch (e) {
@@ -181,9 +239,28 @@ function startListening() {
 }
 
 function stopListening() {
+    shouldKeepListening = false; // Disable auto-restart
     if (recognition && isListening) {
         recognition.stop();
     }
+}
+
+function submitTextAnswer() {
+    const textInput = document.getElementById('text-answer-input');
+    const answer = textInput.value.trim();
+
+    if (answer.length === 0) {
+        alert("Please type your answer first!");
+        return;
+    }
+
+    shouldKeepListening = false; // Disable auto-restart
+    if (recognition && isListening) {
+        recognition.stop();
+    }
+
+    textInput.value = '';
+    sendUserResponse(answer);
 }
 
 async function sendUserResponse(text) {
@@ -214,10 +291,14 @@ async function sendUserResponse(text) {
 }
 
 async function endInterview() {
-    // Stop recognition if still running
+    shouldKeepListening = false;
     if (recognition && isListening) {
         recognition.stop();
     }
+
+    stopTimer();
+
+    if (synth.speaking) synth.cancel();
 
     document.getElementById("interview-screen").classList.add("hidden");
     document.getElementById("feedback-screen").classList.remove("hidden");
@@ -230,18 +311,9 @@ async function endInterview() {
         });
         const data = await response.json();
 
-        // Get the spoken feedback text
         const feedbackText = data.feedback.spoken_feedback || "No feedback available.";
 
-        // Display it nicely
-        document.getElementById("feedback-content").textContent = feedbackText;
-
-        // Speak the feedback!
-        if (synth.speaking) synth.cancel();
-        const utterance = new SpeechSynthesisUtterance(feedbackText);
-        utterance.rate = 1.0;
-        utterance.pitch = 1.0;
-        synth.speak(utterance);
+        document.getElementById("feedback-content").innerHTML = feedbackText.replace(/\n/g, '<br>');
 
     } catch (err) {
         document.getElementById("feedback-content").textContent = "Error loading feedback.";

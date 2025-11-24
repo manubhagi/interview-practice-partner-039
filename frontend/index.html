@@ -70,24 +70,52 @@
         </div>
 
         <div id="interview-screen" class="screen hidden">
-            <div class="status-bar">
-                <div id="status-indicator">
-                    <div id="pulse-dot" class="pulse-dot"></div>
-                    <span id="status-text">Connecting...</span>
+            <div class="split-container">
+                <!-- LEFT: 30% - Text input only -->
+                <div class="text-input-sidebar">
+                    <div class="sidebar-header">
+                        <h3>💬 Type Your Answer</h3>
+                        <p>For coding/technical questions</p>
+                    </div>
+
+                    <textarea id="text-answer-input"
+                        placeholder="Type your code, SQL query, or answer here...&#10;&#10;Example:&#10;def two_sum(nums, target):&#10;    # Your code&#10;    pass"></textarea>
+
+                    <button id="submit-text-btn" class="btn btn-primary" onclick="submitTextAnswer()">
+                        📤 Submit Answer
+                    </button>
+
+                    <div class="tip-box">
+                        <p>💡 <strong>Tip:</strong> You can speak for general questions and type here for code/SQL.</p>
+                    </div>
                 </div>
-                <div style="font-size: 0.875rem; color: var(--text-secondary);">Live Session</div>
-            </div>
 
-            <div id="chat-history"></div>
+                <!-- RIGHT: 70% - Timer + Conversation + Controls -->
+                <div class="main-interview-area">
+                    <div class="status-bar">
+                        <div id="status-indicator">
+                            <div id="pulse-dot" class="pulse-dot"></div>
+                            <span id="status-text">Connecting...</span>
+                        </div>
+                        <div id="timer-display"
+                            style="font-size: 0.875rem; color: var(--text-secondary); font-weight: 600;">
+                            ⏱️ 00:00
+                        </div>
+                    </div>
 
-            <div class="controls">
-                <button id="stop-listening-btn" class="btn btn-primary" onclick="stopListening()"
-                    style="display: none; margin-bottom: 1rem;">
-                    ✋ Done Speaking
-                </button>
-                <button id="end-btn" class="btn btn-danger" onclick="endInterview()">
-                    End Interview & Get Feedback
-                </button>
+                    <!-- Conversation History -->
+                    <div id="chat-history"></div>
+
+                    <div class="controls">
+                        <button id="stop-listening-btn" class="btn btn-primary" onclick="stopListening()"
+                            style="display: none; margin-bottom: 1rem;">
+                            ✋ Done Speaking
+                        </button>
+                        <button id="end-btn" class="btn btn-danger" onclick="endInterview()">
+                            End Interview & Get Feedback
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -97,7 +125,7 @@
                 <p style="color: var(--text-secondary);">Here is your performance analysis</p>
             </div>
 
-            <div id="feedback-content">Generating feedback...</div>
+            <div id="feedback-content" style="text-align: left; line-height: 1.8;">Generating feedback...</div>
 
             <button class="btn btn-primary" onclick="location.reload()">Start New Session</button>
         </div>
